@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { storage } from '../utils/localStorage';
-import { defaultPosts, generateMockPosts } from '../data/mockPosts';
+import { defaultPosts, sampleStarterPosts } from '../data/mockPosts';
 import { defaultQuickRules, defaultIftttFlows, defaultCronJobs } from '../data/mockAutomations';
 import { defaultHashtagSets } from '../data/mockHashtags';
 import { generateNotifications } from '../data/mockNotifications';
@@ -39,7 +39,7 @@ export function AppProvider({ children }) {
     });
   }, []);
 
-  // ── Posts ─────────────────────────────────────────────────
+  // ── Posts (Starts empty by default) ──────────────────────
   const [posts, setPostsState] = useState(() =>
     storage.get('gramflow:posts', defaultPosts)
   );
@@ -53,7 +53,7 @@ export function AppProvider({ children }) {
   }, []);
 
   const addPost = useCallback((post) => {
-    setPosts((prev) => [...prev, post]);
+    setPosts((prev) => [post, ...prev]);
   }, [setPosts]);
 
   const updatePost = useCallback((id, updates) => {
@@ -64,6 +64,10 @@ export function AppProvider({ children }) {
 
   const deletePost = useCallback((id) => {
     setPosts((prev) => prev.filter((p) => p.id !== id));
+  }, [setPosts]);
+
+  const loadSampleData = useCallback(() => {
+    setPosts(sampleStarterPosts);
   }, [setPosts]);
 
   // ── Automations ───────────────────────────────────────────
@@ -119,9 +123,9 @@ export function AppProvider({ children }) {
 
   const addNotification = useCallback((notif) => {
     const n = {
-      id:   `n-${Date.now()}`,
+      id: `n-${Date.now()}`,
       read: false,
-      time: 'just now',
+      time: 'Just now',
       ...notif,
     };
     setNotifications((prev) => {
@@ -139,6 +143,11 @@ export function AppProvider({ children }) {
     });
   }, []);
 
+  const clearNotifications = useCallback(() => {
+    setNotifications([]);
+    storage.set('gramflow:notifications', []);
+  }, []);
+
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   // ── Toast ─────────────────────────────────────────────────
@@ -152,10 +161,10 @@ export function AppProvider({ children }) {
     }, 3500);
   }, []);
 
-  // ── Reset ─────────────────────────────────────────────────
+  // ── Complete Reset (Erases all user data) ────────────────
   const resetAll = useCallback(() => {
     storage.clear();
-    setPostsState(defaultPosts);
+    setPostsState([]);
     setQuickRulesState(defaultQuickRules);
     setIftttFlowsState(defaultIftttFlows);
     setCronJobsState(defaultCronJobs);
@@ -172,7 +181,7 @@ export function AppProvider({ children }) {
     // Theme
     darkMode, toggleDark,
     // Posts
-    posts, addPost, updatePost, deletePost,
+    posts, addPost, updatePost, deletePost, loadSampleData,
     // Automations
     quickRules, setQuickRules,
     iftttFlows, setIftttFlows,
@@ -180,7 +189,7 @@ export function AppProvider({ children }) {
     // Hashtags
     hashtagSets, setHashtagSets,
     // Notifications
-    notifications, addNotification, markAllRead, unreadCount,
+    notifications, addNotification, markAllRead, clearNotifications, unreadCount,
     // Toast
     toasts, showToast,
     // Reset

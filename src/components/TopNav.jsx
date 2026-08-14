@@ -1,62 +1,77 @@
 import React from 'react';
-import { useLocation } from 'react-router-dom';
-import { Sun, Moon, Search } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Sun, Moon, Search, PenSquare, Sparkles } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import NotificationBell from './NotificationBell';
 
-const pageTitles = {
-  '/':            'Dashboard',
-  '/calendar':    'Content Calendar',
-  '/composer':    'Post Composer',
-  '/analytics':   'Analytics',
-  '/automations': 'Automations',
-  '/hashtags':    'Hashtag Research',
-  '/settings':    'Settings',
+const pageMeta = {
+  '/':            { title: 'Dashboard', subtitle: 'Real-time overview of your Instagram presence' },
+  '/calendar':    { title: 'Content Calendar', subtitle: 'Plan, schedule and preview upcoming drops' },
+  '/composer':    { title: 'Post Composer', subtitle: 'Craft and schedule feeds, stories, and reels' },
+  '/analytics':   { title: 'Analytics', subtitle: 'In-depth performance metrics & audience insights' },
+  '/automations': { title: 'Automations', subtitle: 'Smart workflows, auto-responders & schedulers' },
+  '/hashtags':    { title: 'Hashtag Hub', subtitle: 'Discover high-engagement tags and saved sets' },
+  '/settings':    { title: 'Settings', subtitle: 'Manage your connected brand profile & preferences' },
 };
 
 export default function TopNav() {
-  const { darkMode, toggleDark, accountName } = useApp();
+  const { darkMode, toggleDark, accountName, posts } = useApp();
   const { pathname } = useLocation();
-  const title = pageTitles[pathname] || 'GramFlow';
+  const navigate = useNavigate();
+  
+  const currentMeta = pageMeta[pathname] || { title: 'GramFlow', subtitle: 'Instagram Command Center' };
 
   return (
-    <header className="h-14 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 flex items-center px-4 md:px-6 gap-4 shrink-0">
-      {/* Title */}
-      <div className="flex-1">
-        <h2 className="font-semibold text-gray-900 dark:text-white text-sm md:text-base">{title}</h2>
+    <header className="h-16 bg-white/80 dark:bg-[#0e1422]/80 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 flex items-center px-4 md:px-7 justify-between shrink-0 sticky top-0 z-20">
+      {/* Title & Subtitle */}
+      <div>
+        <h2 className="font-bold text-slate-900 dark:text-white text-base md:text-lg tracking-tight leading-tight">
+          {currentMeta.title}
+        </h2>
+        <p className="text-xs text-slate-400 dark:text-slate-500 hidden sm:block">
+          {currentMeta.subtitle}
+        </p>
       </div>
 
-      {/* Search */}
-      <div className="hidden sm:flex items-center gap-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-1.5 w-48 lg:w-64">
-        <Search className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-        <input
-          type="text"
-          placeholder="Search..."
-          className="bg-transparent text-xs text-gray-700 dark:text-gray-300 placeholder-gray-400 focus:outline-none w-full"
-        />
-      </div>
+      {/* Right Controls */}
+      <div className="flex items-center gap-2.5">
+        {/* Quick New Post CTA */}
+        {pathname !== '/composer' && (
+          <button
+            onClick={() => navigate('/composer')}
+            className="btn-primary text-xs !py-2 !px-3.5 hidden sm:flex shadow-sm"
+          >
+            <PenSquare className="w-3.5 h-3.5" />
+            <span>Create Post</span>
+          </button>
+        )}
 
-      {/* Dark mode toggle */}
-      <button
-        onClick={toggleDark}
-        className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-        title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
-      >
-        {darkMode
-          ? <Sun  className="w-5 h-5 text-yellow-400" />
-          : <Moon className="w-5 h-5 text-gray-500" />
-        }
-      </button>
+        {/* Theme Toggle */}
+        <button
+          onClick={toggleDark}
+          className="p-2.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-all active:scale-95"
+          title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+        >
+          {darkMode
+            ? <Sun  className="w-4 h-4 text-amber-400" />
+            : <Moon className="w-4 h-4 text-slate-600" />
+          }
+        </button>
 
-      {/* Notifications */}
-      <NotificationBell />
+        {/* Notification Bell */}
+        <NotificationBell />
 
-      {/* Avatar */}
-      {accountName && (
-        <div className="w-8 h-8 ig-gradient rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0">
-          {accountName[0]?.toUpperCase()}
+        {/* User Account Avatar */}
+        <div
+          onClick={() => navigate('/settings')}
+          className="flex items-center gap-2 pl-1 cursor-pointer group"
+          title="Account Settings"
+        >
+          <div className="w-9 h-9 ig-gradient rounded-xl flex items-center justify-center text-white text-xs font-extrabold shadow-sm group-hover:scale-105 transition-transform">
+            {accountName ? accountName[0]?.toUpperCase() : 'G'}
+          </div>
         </div>
-      )}
+      </div>
     </header>
   );
 }
