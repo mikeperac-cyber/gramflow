@@ -7,15 +7,18 @@ import NotificationBell from './NotificationBell';
 const pageMeta = {
   '/':            { title: 'Dashboard', subtitle: 'Real-time overview of your Instagram presence' },
   '/calendar':    { title: 'Content Calendar', subtitle: 'Plan, schedule and preview upcoming drops' },
-  '/composer':    { title: 'Post Composer', subtitle: 'Craft and schedule feeds, stories, and reels' },
+  '/grid':        { title: '9-Grid Feed Planner', subtitle: 'Curate your 3x3 visual profile aesthetic & layout' },
+  '/composer':    { title: 'Post Composer', subtitle: 'Craft feeds, reels & stories with AI assistance' },
+  '/inbox':       { title: 'Inbox CRM & Comments', subtitle: 'Community management, DMs & auto-responses' },
   '/analytics':   { title: 'Analytics', subtitle: 'In-depth performance metrics & audience insights' },
+  '/competitors': { title: 'Competitor Strategy', subtitle: 'Niche benchmarking, format breakdown & gap analysis' },
   '/automations': { title: 'Automations', subtitle: 'Smart workflows, auto-responders & schedulers' },
   '/hashtags':    { title: 'Hashtag Hub', subtitle: 'Discover high-engagement tags and saved sets' },
-  '/settings':    { title: 'Settings', subtitle: 'Manage your connected brand profile & preferences' },
+  '/settings':    { title: 'Settings', subtitle: 'Manage connected brand profile & data backups' },
 };
 
 export default function TopNav() {
-  const { darkMode, toggleDark, accountName, posts } = useApp();
+  const { darkMode, toggleDark, accountName } = useApp();
   const { pathname } = useLocation();
   const navigate = useNavigate();
   

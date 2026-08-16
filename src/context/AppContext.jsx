@@ -4,6 +4,8 @@ import { defaultPosts, sampleStarterPosts } from '../data/mockPosts';
 import { defaultQuickRules, defaultIftttFlows, defaultCronJobs } from '../data/mockAutomations';
 import { defaultHashtagSets } from '../data/mockHashtags';
 import { generateNotifications } from '../data/mockNotifications';
+import { defaultConversations } from '../data/mockInbox';
+import { defaultCompetitors } from '../data/mockCompetitors';
 
 const AppContext = createContext(null);
 
@@ -39,7 +41,7 @@ export function AppProvider({ children }) {
     });
   }, []);
 
-  // ── Posts (Starts empty by default) ──────────────────────
+  // ── Posts (Clean empty state by default) ───────────────────
   const [posts, setPostsState] = useState(() =>
     storage.get('gramflow:posts', defaultPosts)
   );
@@ -64,6 +66,10 @@ export function AppProvider({ children }) {
 
   const deletePost = useCallback((id) => {
     setPosts((prev) => prev.filter((p) => p.id !== id));
+  }, [setPosts]);
+
+  const reorderPosts = useCallback((newOrderedPosts) => {
+    setPosts(newOrderedPosts);
   }, [setPosts]);
 
   const loadSampleData = useCallback(() => {
@@ -115,6 +121,68 @@ export function AppProvider({ children }) {
       return next;
     });
   }, []);
+
+  // ── Inbox & Comments CRM ──────────────────────────────────
+  const [conversations, setConversationsState] = useState(() =>
+    storage.get('gramflow:conversations', defaultConversations)
+  );
+
+  const setConversations = useCallback((updater) => {
+    setConversationsState((prev) => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      storage.set('gramflow:conversations', next);
+      return next;
+    });
+  }, []);
+
+  const replyToConversation = useCallback((convId, messageText) => {
+    setConversations((prev) =>
+      prev.map((c) => {
+        if (c.id === convId) {
+          const newMsg = {
+            id: `m-${Date.now()}`,
+            sender: 'me',
+            text: messageText,
+            time: 'Just now',
+          };
+          return {
+            ...c,
+            unread: false,
+            lastActivity: 'Just now',
+            messages: [...c.messages, newMsg],
+          };
+        }
+        return c;
+      })
+    );
+  }, [setConversations]);
+
+  const toggleConversationRead = useCallback((convId) => {
+    setConversations((prev) =>
+      prev.map((c) => (c.id === convId ? { ...c, unread: !c.unread } : c))
+    );
+  }, [setConversations]);
+
+  // ── Competitors Intelligence ──────────────────────────────
+  const [competitors, setCompetitorsState] = useState(() =>
+    storage.get('gramflow:competitors', defaultCompetitors)
+  );
+
+  const setCompetitors = useCallback((updater) => {
+    setCompetitorsState((prev) => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      storage.set('gramflow:competitors', next);
+      return next;
+    });
+  }, []);
+
+  const addCompetitor = useCallback((comp) => {
+    setCompetitors((prev) => [comp, ...prev]);
+  }, [setCompetitors]);
+
+  const removeCompetitor = useCallback((id) => {
+    setCompetitors((prev) => prev.filter((c) => c.id !== id));
+  }, [setCompetitors]);
 
   // ── Notifications ─────────────────────────────────────────
   const [notifications, setNotifications] = useState(() =>
@@ -169,6 +237,8 @@ export function AppProvider({ children }) {
     setIftttFlowsState(defaultIftttFlows);
     setCronJobsState(defaultCronJobs);
     setHashtagSetsState(defaultHashtagSets);
+    setConversationsState(defaultConversations);
+    setCompetitorsState(defaultCompetitors);
     setNotifications(generateNotifications());
     setAccountNameState('');
     setShowAccountModal(true);
@@ -180,14 +250,18 @@ export function AppProvider({ children }) {
     showAccountModal, setShowAccountModal,
     // Theme
     darkMode, toggleDark,
-    // Posts
-    posts, addPost, updatePost, deletePost, loadSampleData,
+    // Posts & Feed Grid
+    posts, addPost, updatePost, deletePost, reorderPosts, loadSampleData,
     // Automations
     quickRules, setQuickRules,
     iftttFlows, setIftttFlows,
     cronJobs, setCronJobs,
     // Hashtags
     hashtagSets, setHashtagSets,
+    // Inbox CRM
+    conversations, setConversations, replyToConversation, toggleConversationRead,
+    // Competitors
+    competitors, addCompetitor, removeCompetitor,
     // Notifications
     notifications, addNotification, markAllRead, clearNotifications, unreadCount,
     // Toast

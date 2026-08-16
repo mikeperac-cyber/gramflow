@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import {
   Zap, Play, Clock, Edit2, Trash2, Plus, ArrowRight,
-  CheckCircle2, Sparkles, X, MessageSquare, AlertCircle
+  CheckCircle2, Sparkles, X, MessageSquare, AlertCircle,
+  PlayCircle, CornerDownRight, Check
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -20,6 +21,10 @@ export default function Automations() {
   const [newRuleKeywords, setNewRuleKeywords] = useState('');
   const [newRuleAction, setNewRuleAction] = useState('reply');
   const [newRuleValue, setNewRuleValue] = useState('');
+
+  // Live Test Simulator State
+  const [testInput, setTestInput] = useState('How much is the linen collection?');
+  const [simulationResult, setSimulationResult] = useState(null);
 
   const toggleRule = (id) => {
     setQuickRules(prev => prev.map(r => r.id === id ? { ...r, enabled: !r.enabled } : r));
@@ -48,7 +53,7 @@ export default function Automations() {
       trigger: 'comment',
       keywords: newRuleKeywords.split(',').map(k => k.trim()).filter(Boolean),
       action: newRuleAction,
-      actionValue: newRuleValue,
+      actionValue: newRuleValue || 'Thanks for your comment! Link in bio ✨',
       icon: newRuleAction === 'reply' ? '💬' : newRuleAction === 'send_dm' ? '📩' : '❤️',
     };
 
@@ -63,6 +68,33 @@ export default function Automations() {
     setNewRuleTitle('');
     setNewRuleKeywords('');
     setNewRuleValue('');
+  };
+
+  const handleRunSimulation = (e) => {
+    e.preventDefault();
+    if (!testInput.trim()) return;
+
+    const lowerInput = testInput.toLowerCase();
+    const matchedRule = quickRules.find(r =>
+      r.enabled && r.keywords.some(kw => lowerInput.includes(kw.toLowerCase()))
+    );
+
+    if (matchedRule) {
+      setSimulationResult({
+        matched: true,
+        ruleName: matchedRule.title,
+        action: matchedRule.action,
+        reply: matchedRule.actionValue || 'Thank you for reaching out! Check our link in bio ✨',
+        triggerKw: matchedRule.keywords.find(kw => lowerInput.includes(kw.toLowerCase()))
+      });
+      showToast('Rule matched and triggered! 🎯');
+    } else {
+      setSimulationResult({
+        matched: false,
+        message: 'No active automation rules matched the test text.'
+      });
+      showToast('No keyword matches found in active rules', 'info');
+    }
   };
 
   const toggleFlow = (id) => {
@@ -88,10 +120,10 @@ export default function Automations() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            Automation Center
+            Automation & Trigger Center
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            Automate direct messages, comment replies, and publishing tasks.
+            Automate direct messages, auto-comment replies, and scheduled background tasks.
           </p>
         </div>
 
@@ -108,6 +140,7 @@ export default function Automations() {
       <div className="flex bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800 p-1.5 rounded-2xl w-fit shadow-sm">
         {[
           { id: 'quick', label: 'Trigger Rules', icon: Zap },
+          { id: 'simulator', label: '🧪 Live Test Simulator', icon: PlayCircle },
           { id: 'ifttt', label: 'Multi-Step Workflows', icon: Play },
           { id: 'cron',  label: 'Scheduled Tasks', icon: Clock },
         ].map((t) => (
@@ -126,7 +159,7 @@ export default function Automations() {
         ))}
       </div>
 
-      {/* TAB 1: QUICK RULES */}
+      {/* TAB 1: TRIGGER RULES */}
       {activeTab === 'quick' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 animate-fade-in">
           {quickRules.map((rule) => (
@@ -204,7 +237,80 @@ export default function Automations() {
         </div>
       )}
 
-      {/* TAB 2: IFTTT WORKFLOWS */}
+      {/* TAB 2: LIVE SIMULATOR */}
+      {activeTab === 'simulator' && (
+        <div className="card p-6 sm:p-8 max-w-3xl mx-auto shadow-sm space-y-6 animate-fade-in">
+          <div>
+            <h3 className="font-extrabold text-base text-slate-900 dark:text-white flex items-center gap-2">
+              <PlayCircle className="w-5 h-5 text-pink-500" />
+              <span>Interactive Rule Simulation Playground</span>
+            </h3>
+            <p className="text-xs text-slate-400 mt-1">
+              Test your active trigger rules against incoming customer messages to verify match logic.
+            </p>
+          </div>
+
+          <form onSubmit={handleRunSimulation} className="space-y-4">
+            <div>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
+                Simulated Incoming Customer Comment or DM
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  className="input text-xs"
+                  placeholder="e.g. How much is the shipping cost to LA?"
+                  value={testInput}
+                  onChange={(e) => setTestInput(e.target.value)}
+                  required
+                />
+                <button type="submit" className="btn-primary !px-5 text-xs font-bold shrink-0">
+                  <PlayCircle className="w-4 h-4" /> Run Test
+                </button>
+              </div>
+            </div>
+          </form>
+
+          {/* Result Box */}
+          {simulationResult && (
+            <div className={`p-5 rounded-2xl border transition-all animate-fade-in ${
+              simulationResult.matched
+                ? 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-800/60'
+                : 'bg-amber-50/50 dark:bg-amber-950/20 border-amber-300 dark:border-amber-800/60'
+            }`}>
+              {simulationResult.matched ? (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-300 font-extrabold text-sm">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+                    <span>Trigger Matched: "{simulationResult.ruleName}"</span>
+                  </div>
+
+                  <div className="text-xs space-y-1 text-slate-600 dark:text-slate-300">
+                    <p>Matched Keyword: <span className="font-bold text-pink-600">"{simulationResult.triggerKw}"</span></p>
+                    <p>Automated Action: <span className="font-bold uppercase">{simulationResult.action}</span></p>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs shadow-xs space-y-1">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                      Automated Customer Response Generated:
+                    </span>
+                    <p className="font-semibold text-slate-800 dark:text-slate-100">
+                      "{simulationResult.reply}"
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300 text-xs font-semibold">
+                  <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
+                  <span>{simulationResult.message} Try testing with words like "price", "cost", or create a new trigger rule.</span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB 3: IFTTT WORKFLOWS */}
       {activeTab === 'ifttt' && (
         <div className="space-y-4 animate-fade-in">
           {iftttFlows.map((flow) => (
@@ -264,7 +370,7 @@ export default function Automations() {
         </div>
       )}
 
-      {/* TAB 3: CRON SCHEDULES */}
+      {/* TAB 4: CRON SCHEDULES */}
       {activeTab === 'cron' && (
         <div className="card overflow-hidden animate-fade-in shadow-sm">
           <table className="w-full text-left border-collapse">
@@ -350,7 +456,7 @@ export default function Automations() {
                   Rule Name
                 </label>
                 <input
-                  className="input"
+                  className="input text-xs"
                   placeholder="e.g. Auto-Reply to Collaboration Inquiries"
                   value={newRuleTitle}
                   onChange={(e) => setNewRuleTitle(e.target.value)}
@@ -363,7 +469,7 @@ export default function Automations() {
                   Trigger Keywords (comma separated)
                 </label>
                 <input
-                  className="input"
+                  className="input text-xs"
                   placeholder="collab, partnership, sponsor, promote"
                   value={newRuleKeywords}
                   onChange={(e) => setNewRuleKeywords(e.target.value)}
@@ -375,7 +481,7 @@ export default function Automations() {
                   Automated Action
                 </label>
                 <select
-                  className="input"
+                  className="input text-xs"
                   value={newRuleAction}
                   onChange={(e) => setNewRuleAction(e.target.value)}
                 >
@@ -390,7 +496,7 @@ export default function Automations() {
                   Response Template
                 </label>
                 <textarea
-                  className="input resize-none"
+                  className="input text-xs resize-none"
                   rows={3}
                   placeholder="Hey! Thanks for reaching out. Please send your media kit to partnerships@brand.com!"
                   value={newRuleValue}
@@ -402,13 +508,13 @@ export default function Automations() {
                 <button
                   type="button"
                   onClick={() => setShowRuleModal(false)}
-                  className="btn-secondary flex-1"
+                  className="btn-secondary flex-1 text-xs"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="btn-primary flex-1"
+                  className="btn-primary flex-1 text-xs"
                 >
                   Create & Activate
                 </button>
