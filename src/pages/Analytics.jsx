@@ -17,12 +17,12 @@ import {
 import { useNavigate } from 'react-router-dom';
 
 export default function Analytics() {
-  const { posts } = useApp();
+  const { posts, followerBaseline } = useApp();
   const navigate = useNavigate();
   const [range, setRange] = useState(30);
 
-  const kpis = useMemo(() => calculateKPIs(posts), [posts]);
-  const followerData = useMemo(() => generateFollowerGrowth(range, posts.length), [range, posts.length]);
+  const kpis = useMemo(() => calculateKPIs(posts, followerBaseline), [posts, followerBaseline]);
+  const followerData = useMemo(() => generateFollowerGrowth(range, posts.length, followerBaseline), [range, posts.length, followerBaseline]);
   const engagementData = useMemo(() => generateEngagementData(posts), [posts]);
   const heatmapData = useMemo(() => generateHeatmapData(), []);
   const topPosts = useMemo(() => generateTopPosts(posts), [posts]);

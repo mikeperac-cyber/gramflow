@@ -1,49 +1,100 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import {
   Moon, Sun, Bell, ShieldAlert, Trash2, CheckCircle2,
-  Download, Upload, Camera, Sparkles, AlertCircle, X
+  Download, Upload, Camera, Sparkles, AlertCircle, X,
+  Link as LinkIcon, User, Layers, FileText
 } from 'lucide-react';
 
 export default function Settings() {
   const {
     accountName, setAccountName,
+    profileBio, setProfileBio,
+    websiteUrl, setWebsiteUrl,
+    profileAvatar, setProfileAvatar,
+    followerBaseline, setFollowerBaseline,
     darkMode, toggleDark,
     resetAll, showToast, posts,
-    quickRules, hashtagSets
+    quickRules, hashtagSets,
+    conversations, competitors,
+    addPost, setQuickRules, setHashtagSets,
+    setConversations, setCompetitors
   } = useApp();
 
+  const fileImportRef = useRef(null);
+
   const [nameInput, setNameInput] = useState(accountName || '');
+  const [bioInput, setBioInput] = useState(profileBio || '');
+  const [websiteInput, setWebsiteInput] = useState(websiteUrl || '');
+  const [avatarInput, setAvatarInput] = useState(profileAvatar || '✨');
+  const [followerInput, setFollowerInput] = useState(followerBaseline?.toString() || '0');
+
   const [saved, setSaved] = useState(false);
   const [showConfirmReset, setShowConfirmReset] = useState(false);
 
-  const handleSaveAccount = () => {
+  const handleSaveAll = (e) => {
+    e.preventDefault();
     const handle = nameInput.trim().replace(/^@/, '');
-    if (handle) {
-      setAccountName(handle);
-      setSaved(true);
-      showToast('Brand handle updated successfully! ✨');
-      setTimeout(() => setSaved(false), 2000);
-    }
+    if (handle) setAccountName(handle);
+    setProfileBio(bioInput);
+    setWebsiteUrl(websiteInput);
+    setProfileAvatar(avatarInput);
+    setFollowerBaseline(followerInput);
+
+    setSaved(true);
+    showToast('Brand settings & profile updated! ✨');
+    setTimeout(() => setSaved(false), 2000);
   };
 
   const handleExportData = () => {
     const data = {
       accountName,
+      profileBio,
+      websiteUrl,
+      profileAvatar,
+      followerBaseline,
       exportedAt: new Date().toISOString(),
       posts,
       quickRules,
       hashtagSets,
+      conversations,
+      competitors
     };
 
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `gramflow-backup-${formatDate(new Date())}.json`;
+    a.download = `gramflow-workspace-${formatDate(new Date())}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    showToast('Data exported to JSON file! 💾');
+    showToast('Workspace exported to JSON! 💾');
+  };
+
+  const handleImportData = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const parsed = JSON.parse(event.target.result);
+        if (parsed.accountName) setAccountName(parsed.accountName);
+        if (parsed.profileBio) setProfileBio(parsed.profileBio);
+        if (parsed.websiteUrl) setWebsiteUrl(parsed.websiteUrl);
+        if (parsed.followerBaseline !== undefined) setFollowerBaseline(parsed.followerBaseline);
+        if (Array.isArray(parsed.posts)) parsed.posts.forEach(p => addPost(p));
+        if (Array.isArray(parsed.quickRules)) setQuickRules(parsed.quickRules);
+        if (Array.isArray(parsed.hashtagSets)) setHashtagSets(parsed.hashtagSets);
+        if (Array.isArray(parsed.conversations)) setConversations(parsed.conversations);
+        if (Array.isArray(parsed.competitors)) setCompetitors(parsed.competitors);
+
+        showToast('Workspace JSON imported successfully! 🚀');
+      } catch (err) {
+        showToast('Invalid JSON backup file', 'error');
+      }
+    };
+    reader.readAsText(file);
   };
 
   function formatDate(d) {
@@ -60,140 +111,196 @@ export default function Settings() {
     <div className="max-w-4xl mx-auto space-y-6 pb-20 md:pb-6 animate-fade-in">
       <div>
         <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-          Brand Profile & Settings
+          Brand Profile & System Preferences
         </h1>
         <p className="text-xs text-slate-400 mt-1">
-          Configure your connected Instagram profile, UI preferences, and local data.
+          Customize your brand profile, baseline analytics, and data backup controls.
         </p>
       </div>
 
-      {/* Account Settings */}
-      <div className="card shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-slate-100 dark:border-slate-800 space-y-4">
+      <form onSubmit={handleSaveAll} className="space-y-6">
+        {/* Profile Customization */}
+        <div className="card shadow-sm p-6 space-y-5">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl ig-gradient text-white flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl ig-gradient text-white flex items-center justify-center shadow-xs">
               <Camera className="w-4 h-4" />
             </div>
-            <h2 className="text-base font-bold text-slate-900 dark:text-white">
-              Connected Instagram Handle
+            <h2 className="text-base font-extrabold text-slate-900 dark:text-white">
+              Brand Profile Customization
             </h2>
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-end gap-3 max-w-md">
-            <div className="flex-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-                Active Brand Handle
+                Instagram Handle
               </label>
               <div className="flex items-center">
-                <span className="bg-slate-100 dark:bg-slate-800 border border-r-0 border-slate-200 dark:border-slate-700 rounded-l-xl px-3.5 py-2.5 text-sm text-slate-500 font-bold">
+                <span className="bg-slate-100 dark:bg-slate-800 border border-r-0 border-slate-200 dark:border-slate-700 rounded-l-xl px-3.5 py-2.5 text-xs text-slate-500 font-bold">
                   @
                 </span>
                 <input
                   type="text"
-                  className="input rounded-l-none"
+                  className="input rounded-l-none text-xs"
                   placeholder="your_handle"
                   value={nameInput}
                   onChange={(e) => setNameInput(e.target.value)}
+                  required
                 />
               </div>
             </div>
 
-            <button
-              onClick={handleSaveAccount}
-              disabled={nameInput === accountName || !nameInput.trim()}
-              className="btn-primary !py-2.5 !px-5 min-w-[100px] disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-            >
-              {saved ? <CheckCircle2 className="w-4 h-4" /> : 'Save Handle'}
-            </button>
-          </div>
-          <p className="text-xs text-slate-400">
-            Updating this handle updates your preview frames and mock analytics.
-          </p>
-        </div>
-
-        {/* Preferences Section */}
-        <div className="p-6 border-b border-slate-100 dark:border-slate-800 space-y-5">
-          <h2 className="text-base font-bold text-slate-900 dark:text-white mb-2">
-            Appearance & Experience
-          </h2>
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3.5">
-              <div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center">
-                {darkMode ? <Moon className="w-5 h-5 text-purple-400" /> : <Sun className="w-5 h-5 text-amber-500" />}
-              </div>
-              <div>
-                <p className="font-bold text-sm text-slate-900 dark:text-white">Dark Theme</p>
-                <p className="text-xs text-slate-400">Toggle dark mode visual interface</p>
-              </div>
-            </div>
-            <button
-              onClick={toggleDark}
-              className={`w-12 h-6 rounded-full transition-all relative p-0.5 ${
-                darkMode ? 'toggle-active' : 'toggle-inactive'
-              }`}
-            >
-              <div
-                className={`w-5 h-5 bg-white rounded-full transition-transform shadow-md ${
-                  darkMode ? 'translate-x-6' : 'translate-x-0'
-                }`}
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                Profile Avatar (Emoji or Symbol)
+              </label>
+              <input
+                type="text"
+                className="input text-xs"
+                placeholder="✨ or ☕ or 🌿"
+                value={avatarInput}
+                onChange={(e) => setAvatarInput(e.target.value)}
               />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+              Brand Bio (renders in Grid Planner)
+            </label>
+            <textarea
+              className="input text-xs resize-none leading-relaxed"
+              rows={3}
+              placeholder="Describe what your brand creates or sells..."
+              value={bioInput}
+              onChange={(e) => setBioInput(e.target.value)}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                Website / Bio Link
+              </label>
+              <input
+                type="text"
+                className="input text-xs"
+                placeholder="linktr.ee/mybrand"
+                value={websiteInput}
+                onChange={(e) => setWebsiteInput(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                Baseline Follower Count
+              </label>
+              <input
+                type="number"
+                className="input text-xs"
+                placeholder="1250"
+                value={followerInput}
+                onChange={(e) => setFollowerInput(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="pt-2 flex justify-end">
+            <button
+              type="submit"
+              className="btn-primary text-xs !py-2.5 !px-6 shadow-sm"
+            >
+              {saved ? <CheckCircle2 className="w-4 h-4" /> : 'Save Profile Changes'}
             </button>
           </div>
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3.5">
-              <div className="w-10 h-10 bg-pink-50 dark:bg-pink-950/60 rounded-xl flex items-center justify-center text-pink-600">
-                <Bell className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="font-bold text-sm text-slate-900 dark:text-white">In-App Alerts</p>
-                <p className="text-xs text-slate-400">Show notification bell badges for scheduled post events</p>
-              </div>
-            </div>
-            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 px-2.5 py-1 rounded-full">
-              Enabled
-            </span>
-          </div>
         </div>
+      </form>
 
-        {/* Data Backup & Export */}
-        <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-base font-bold text-slate-900 dark:text-white mb-1">
-              Data Management & Backup
-            </h2>
-            <p className="text-xs text-slate-400 max-w-md">
-              Download a complete JSON snapshot of all your scheduled posts, automations, and custom hashtag groups.
-            </p>
+      {/* Preferences Section */}
+      <div className="card shadow-sm p-6 space-y-5">
+        <h2 className="text-base font-extrabold text-slate-900 dark:text-white mb-2">
+          Interface & Visual Mode
+        </h2>
+
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center">
+              {darkMode ? <Moon className="w-5 h-5 text-purple-400" /> : <Sun className="w-5 h-5 text-amber-500" />}
+            </div>
+            <div>
+              <p className="font-bold text-sm text-slate-900 dark:text-white">Dark Theme Interface</p>
+              <p className="text-xs text-slate-400">Toggle dark mode styling</p>
+            </div>
           </div>
-
           <button
-            onClick={handleExportData}
-            className="btn-secondary text-xs !py-2.5 !px-4 shrink-0 shadow-sm"
+            onClick={toggleDark}
+            className={`w-12 h-6 rounded-full transition-all relative p-0.5 ${
+              darkMode ? 'toggle-active' : 'toggle-inactive'
+            }`}
           >
-            <Download className="w-4 h-4" /> Export Workspace JSON
+            <div
+              className={`w-5 h-5 bg-white rounded-full transition-transform shadow-md ${
+                darkMode ? 'translate-x-6' : 'translate-x-0'
+              }`}
+            />
           </button>
         </div>
+      </div>
 
-        {/* Danger Zone */}
-        <div className="p-6 bg-rose-50/30 dark:bg-rose-950/10">
-          <h2 className="text-sm font-bold text-rose-600 dark:text-rose-400 mb-2 flex items-center gap-2">
-            <ShieldAlert className="w-4 h-4" /> Danger Zone
-          </h2>
-
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-lg">
-              Reset and erase all local posts, drafts, custom automations, and account cache.
+      {/* Data Backup & Import/Export */}
+      <div className="card shadow-sm p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-extrabold text-slate-900 dark:text-white mb-1">
+              Workspace Backup & Portability
+            </h2>
+            <p className="text-xs text-slate-400 max-w-md">
+              Export and import your entire workspace including scheduled calendar items, custom rules, inbox leads, and competitors.
             </p>
-
-            <button
-              onClick={() => setShowConfirmReset(true)}
-              className="btn-secondary !text-rose-600 hover:!bg-rose-50 dark:hover:!bg-rose-950/50 border-rose-200 dark:border-rose-900/50 shrink-0 text-xs font-bold"
-            >
-              <Trash2 className="w-4 h-4" /> Reset All Data
-            </button>
           </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3 pt-2">
+          <button
+            onClick={handleExportData}
+            className="btn-secondary text-xs !py-2.5 !px-4 shadow-sm"
+          >
+            <Download className="w-4 h-4" /> Export Backup JSON
+          </button>
+
+          <input
+            type="file"
+            ref={fileImportRef}
+            onChange={handleImportData}
+            accept=".json"
+            className="hidden"
+          />
+          <button
+            onClick={() => fileImportRef.current?.click()}
+            className="btn-secondary text-xs !py-2.5 !px-4 shadow-sm"
+          >
+            <Upload className="w-4 h-4" /> Import Backup JSON
+          </button>
+        </div>
+      </div>
+
+      {/* Danger Zone */}
+      <div className="card shadow-sm p-6 bg-rose-50/30 dark:bg-rose-950/10 border-rose-200/50 dark:border-rose-900/40">
+        <h2 className="text-sm font-extrabold text-rose-600 dark:text-rose-400 mb-2 flex items-center gap-2">
+          <ShieldAlert className="w-4 h-4" /> Danger Zone
+        </h2>
+
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-lg">
+            Erase all local posts, drafts, custom automations, CRM conversations, and reset to clean state.
+          </p>
+
+          <button
+            onClick={() => setShowConfirmReset(true)}
+            className="btn-secondary !text-rose-600 hover:!bg-rose-50 dark:hover:!bg-rose-950/50 border-rose-200 dark:border-rose-900/50 shrink-0 text-xs font-bold"
+          >
+            <Trash2 className="w-4 h-4" /> Reset All Data
+          </button>
         </div>
       </div>
 
@@ -208,7 +315,7 @@ export default function Settings() {
               Erase all application data?
             </h3>
             <p className="text-xs text-center text-slate-500 dark:text-slate-400 leading-relaxed">
-              This will clear your localStorage and return the app to a clean, empty state.
+              This will clear your local storage and return the app to a clean, empty state.
             </p>
             <div className="flex gap-3 pt-2">
               <button

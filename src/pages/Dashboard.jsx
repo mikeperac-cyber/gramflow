@@ -14,7 +14,7 @@ import {
 import { generateFollowerGrowth, calculateKPIs } from '../data/mockAnalytics';
 
 export default function Dashboard() {
-  const { posts, quickRules, notifications, accountName, loadSampleData } = useApp();
+  const { posts, quickRules, notifications, accountName, followerBaseline, loadSampleData } = useApp();
   const navigate = useNavigate();
 
   const now = new Date();
@@ -30,8 +30,8 @@ export default function Dashboard() {
   const published = useMemo(() => posts.filter((p) => p.status === 'published'), [posts]);
   const activeRulesCount = quickRules.filter((r) => r.enabled).length;
 
-  const kpiData = useMemo(() => calculateKPIs(posts), [posts]);
-  const followerData = useMemo(() => generateFollowerGrowth(14, posts.length), [posts.length]);
+  const kpiData = useMemo(() => calculateKPIs(posts, followerBaseline), [posts, followerBaseline]);
+  const followerData = useMemo(() => generateFollowerGrowth(14, posts.length, followerBaseline), [posts.length, followerBaseline]);
 
   return (
     <div className="space-y-6 pb-20 md:pb-6 max-w-7xl mx-auto animate-fade-in">

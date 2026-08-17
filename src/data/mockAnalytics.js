@@ -1,18 +1,17 @@
 import { format, subDays } from 'date-fns';
 
 // Dynamically generate follower growth based on user history or a clean baseline
-export const generateFollowerGrowth = (days = 30, postsCount = 0) => {
+export const generateFollowerGrowth = (days = 30, postsCount = 0, baseFollowers = 0) => {
   const data = [];
-  const baseFollowers = 1250; // realistic clean starter business account
   const now = new Date();
 
   for (let i = days; i >= 0; i--) {
     const date = subDays(now, i);
     const dayProgress = (days - i) / (days || 1);
-    const growth = Math.round(baseFollowers + (postsCount * 45) + (dayProgress * (20 + postsCount * 12)));
+    const growth = Math.round(baseFollowers + (postsCount * 45) + (dayProgress * (postsCount > 0 ? 20 + postsCount * 12 : 0)));
     data.push({
       date: format(date, 'MMM d'),
-      followers: growth,
+      followers: Math.max(0, growth),
     });
   }
   return data;
@@ -22,18 +21,15 @@ export const generateFollowerGrowth = (days = 30, postsCount = 0) => {
 export const generateEngagementData = (posts = []) => {
   const published = posts.filter(p => p.status === 'published');
   if (published.length === 0) {
-    return [
-      { name: 'Welcome Post', engagement: 4.5, likes: 64, comments: 8, reach: 450 },
-      { name: 'Starter Reel', engagement: 6.2, likes: 120, comments: 15, reach: 980 }
-    ];
+    return [];
   }
 
   return published.slice(-7).map((p, idx) => ({
     name: p.caption ? p.caption.slice(0, 15) + '…' : `Post #${idx + 1}`,
     engagement: p.metrics ? +(((p.metrics.likes + p.metrics.comments) / (p.metrics.reach || 100)) * 100).toFixed(1) : 4.2,
-    likes: p.metrics?.likes || 45,
-    comments: p.metrics?.comments || 6,
-    reach: p.metrics?.reach || 520,
+    likes: p.metrics?.likes || 0,
+    comments: p.metrics?.comments || 0,
+    reach: p.metrics?.reach || 0,
   }));
 };
 
@@ -65,8 +61,8 @@ export const generateHeatmapData = () => {
   return data;
 };
 
-// Calculate real-time KPIs based on posts array
-export const calculateKPIs = (posts = []) => {
+// Calculate real-time KPIs based on posts array & user baseline
+export const calculateKPIs = (posts = [], followerBaseline = 0) => {
   const published = posts.filter(p => p.status === 'published');
   const scheduled = posts.filter(p => p.status === 'scheduled');
   
@@ -75,7 +71,7 @@ export const calculateKPIs = (posts = []) => {
 
   return {
     followers: {
-      value: 1250 + (published.length * 45),
+      value: followerBaseline + (published.length * 45),
       change: published.length > 0 ? +5.4 : 0,
       label: 'Followers',
     },

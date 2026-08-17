@@ -232,52 +232,66 @@ export default function HashtagResearch() {
             </div>
 
             <div className="space-y-3">
-              {hashtagSets.map((set) => (
-                <div
-                  key={set.id}
-                  className="border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 bg-slate-50/50 dark:bg-slate-900/40 space-y-2.5"
-                >
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-bold text-xs text-slate-900 dark:text-white truncate">
-                      {set.name}
-                    </h4>
-                    <div className="flex items-center gap-1">
+              {hashtagSets.length === 0 ? (
+                <div className="text-center py-6 px-3 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl space-y-2">
+                  <Hash className="w-6 h-6 text-slate-300 dark:text-slate-700 mx-auto" />
+                  <p className="text-xs font-bold text-slate-700 dark:text-slate-300">No saved groups yet</p>
+                  <p className="text-[10px] text-slate-400">Save custom hashtag combinations for 1-click clipboard pasting.</p>
+                  <button
+                    onClick={() => setShowAddSetModal(true)}
+                    className="btn-primary text-xs !py-1.5 !px-3 mx-auto mt-1"
+                  >
+                    + Create Group
+                  </button>
+                </div>
+              ) : (
+                hashtagSets.map((set) => (
+                  <div
+                    key={set.id}
+                    className="border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 bg-slate-50/50 dark:bg-slate-900/40 space-y-2.5"
+                  >
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-bold text-xs text-slate-900 dark:text-white truncate">
+                        {set.name}
+                      </h4>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleCopy(set.tags.join(' '), set.id)}
+                          className="p-1.5 text-slate-400 hover:text-pink-600 transition-colors"
+                          title="Copy all tags"
+                        >
+                          {copiedId === set.id ? (
+                            <Check className="w-4 h-4 text-emerald-500" />
+                          ) : (
+                            <Copy className="w-4 h-4" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => handleDeleteSet(set.id)}
+                          className="p-1.5 text-slate-400 hover:text-rose-500 transition-colors"
+                          title="Delete set"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-3">
+                      {set.tags.join(' ')}
+                    </p>
+
+                    <div className="flex items-center justify-between text-[10px] text-slate-400 font-semibold pt-1 border-t border-slate-100 dark:border-slate-800">
+                      <span>{set.tags.length} tags bundled</span>
                       <button
                         onClick={() => handleCopy(set.tags.join(' '), set.id)}
-                        className="p-1.5 text-slate-400 hover:text-pink-600 transition-colors"
-                        title="Copy all tags"
+                        className="text-pink-600 dark:text-pink-400 hover:underline"
                       >
-                        {copiedId === set.id ? (
-                          <Check className="w-4 h-4 text-emerald-500" />
-                        ) : (
-                          <Copy className="w-4 h-4" />
-                        )}
-                      </button>
-                      <button
-                        onClick={() => handleDeleteSet(set.id)}
-                        className="p-1.5 text-slate-400 hover:text-rose-500 transition-colors"
-                        title="Delete set"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        Copy All
                       </button>
                     </div>
                   </div>
-
-                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-3">
-                    {set.tags.join(' ')}
-                  </p>
-
-                  <div className="flex items-center justify-between text-[10px] text-slate-400 font-semibold pt-1 border-t border-slate-100 dark:border-slate-800">
-                    <span>{set.tags.length} tags bundled</span>
-                    <button
-                      onClick={() => handleCopy(set.tags.join(' '), set.id)}
-                      className="text-pink-600 dark:text-pink-400 hover:underline"
-                    >
-                      Copy All
-                    </button>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>

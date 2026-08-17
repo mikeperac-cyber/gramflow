@@ -68,15 +68,5 @@ export const trendingHashtags = [
   { tag: '#visualstorytelling', posts: '3.9M', competition: 'low', growth: '+115%', emoji: '📸' },
 ];
 
-export const defaultHashtagSets = [
-  {
-    id: 'set-1',
-    name: 'Brand & Growth Essentials',
-    tags: ['#smallbusiness', '#entrepreneur', '#shoplocal', '#marketingtips', '#contentcreator', '#brandstrategy'],
-  },
-  {
-    id: 'set-2',
-    name: 'Engagement & Discoverability',
-    tags: ['#explorepage', '#viral', '#trending', '#instadaily', '#visualstorytelling', '#creativelife'],
-  },
-];
+// Clean initial state: zero demo saved groups
+export const defaultHashtagSets = [];

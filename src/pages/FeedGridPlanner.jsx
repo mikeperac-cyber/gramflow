@@ -3,18 +3,32 @@ import { useApp } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
 import {
   Grid, Plus, ArrowUpDown, Eye, Calendar, Sparkles,
-  MoveLeft, MoveRight, Trash2, Camera, Layers, CheckCircle
+  MoveLeft, MoveRight, Trash2, Camera, Layers, CheckCircle,
+  Edit3, Link as LinkIcon, X, Check
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 
-const defaultBio = "✨ Mindful Lifestyle & Creative Studio\n🌿 Sustainable goods & daily design inspiration\n🛍️ Tap the link below for our latest drop!";
-
 export default function FeedGridPlanner() {
-  const { posts, reorderPosts, accountName, showToast } = useApp();
+  const {
+    posts, reorderPosts, accountName,
+    profileBio, setProfileBio,
+    websiteUrl, setWebsiteUrl,
+    profileAvatar, setProfileAvatar,
+    followerBaseline,
+    profileHighlights, setProfileHighlights,
+    showToast
+  } = useApp();
+
   const navigate = useNavigate();
 
   const [filter, setFilter] = useState('all'); // all | scheduled | published
   const [selectedPost, setSelectedPost] = useState(null);
+  const [showEditBioModal, setShowEditBioModal] = useState(false);
+
+  // Edit Bio Form State
+  const [tempBio, setTempBio] = useState(profileBio);
+  const [tempWebsite, setTempWebsite] = useState(websiteUrl);
+  const [tempAvatar, setTempAvatar] = useState(profileAvatar);
 
   const displayPosts = posts.filter(p => {
     if (filter === 'scheduled') return p.status === 'scheduled';
@@ -35,6 +49,15 @@ export default function FeedGridPlanner() {
     showToast('Grid layout updated! 📐');
   };
 
+  const handleSaveProfileHeader = (e) => {
+    e.preventDefault();
+    setProfileBio(tempBio);
+    setWebsiteUrl(tempWebsite);
+    setProfileAvatar(tempAvatar);
+    setShowEditBioModal(false);
+    showToast('Profile header customized! ✨');
+  };
+
   return (
     <div className="space-y-6 pb-20 md:pb-6 max-w-5xl mx-auto animate-fade-in">
       {/* Header */}
@@ -50,10 +73,19 @@ export default function FeedGridPlanner() {
         </div>
 
         <div className="flex items-center gap-2.5">
+          <button
+            onClick={() => setShowEditBioModal(true)}
+            className="btn-secondary text-xs !py-2.5 !px-3.5 shadow-sm"
+            title="Edit profile bio & avatar"
+          >
+            <Edit3 className="w-3.5 h-3.5" />
+            <span>Edit Profile Info</span>
+          </button>
+
           <div className="flex items-center bg-white dark:bg-[#111726] border border-slate-200/80 dark:border-slate-800 p-1 rounded-xl shadow-sm">
             {[
               { id: 'all', label: 'Full Grid' },
-              { id: 'scheduled', label: 'Queued Only' },
+              { id: 'scheduled', label: 'Queued' },
               { id: 'published', label: 'Published' }
             ].map(f => (
               <button
@@ -75,7 +107,7 @@ export default function FeedGridPlanner() {
             className="btn-primary text-xs !py-2.5 !px-3.5 shadow-sm"
           >
             <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">Add to Grid</span>
+            <span className="hidden sm:inline">Add Post</span>
           </button>
         </div>
       </div>
@@ -83,13 +115,20 @@ export default function FeedGridPlanner() {
       {/* Main Grid Viewport Frame */}
       <div className="card p-6 sm:p-8 max-w-xl mx-auto shadow-xl border border-slate-200/90 dark:border-slate-800 space-y-6">
         {/* Instagram Profile Header Simulation */}
-        <div className="space-y-4 pb-6 border-b border-slate-100 dark:border-slate-800">
+        <div className="space-y-4 pb-6 border-b border-slate-100 dark:border-slate-800 relative group/header">
+          <button
+            onClick={() => setShowEditBioModal(true)}
+            className="absolute top-0 right-0 p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 opacity-0 group-hover/header:opacity-100 transition-opacity text-xs flex items-center gap-1 font-bold"
+          >
+            <Edit3 className="w-3 h-3" /> Edit
+          </button>
+
           <div className="flex items-center gap-5 sm:gap-8">
             <div className="relative">
               <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-full p-[3px] ig-gradient shadow-md">
                 <div className="w-full h-full rounded-full bg-white dark:bg-slate-900 p-1 flex items-center justify-center">
                   <div className="w-full h-full rounded-full ig-gradient flex items-center justify-center text-white text-xl sm:text-2xl font-black">
-                    {accountName ? accountName[0]?.toUpperCase() : 'G'}
+                    {profileAvatar || (accountName ? accountName[0]?.toUpperCase() : 'G')}
                   </div>
                 </div>
               </div>
@@ -105,11 +144,15 @@ export default function FeedGridPlanner() {
                 <p className="text-[11px] text-slate-400 font-medium">Posts</p>
               </div>
               <div>
-                <p className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white">1,250</p>
+                <p className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white">
+                  {followerBaseline ? Number(followerBaseline).toLocaleString() : '0'}
+                </p>
                 <p className="text-[11px] text-slate-400 font-medium">Followers</p>
               </div>
               <div>
-                <p className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white">340</p>
+                <p className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white">
+                  {Math.round(followerBaseline * 0.25) || '0'}
+                </p>
                 <p className="text-[11px] text-slate-400 font-medium">Following</p>
               </div>
             </div>
@@ -121,23 +164,20 @@ export default function FeedGridPlanner() {
               @{accountName || 'your_brand'}
             </p>
             <p className="text-slate-600 dark:text-slate-300 whitespace-pre-line leading-relaxed">
-              {defaultBio}
+              {profileBio || 'Write your customized brand bio here...'}
             </p>
-            <p className="font-bold text-pink-600 dark:text-pink-400 flex items-center gap-1">
-              🔗 linktr.ee/{accountName || 'your_brand'}
-            </p>
+            {websiteUrl && (
+              <p className="font-bold text-pink-600 dark:text-pink-400 flex items-center gap-1">
+                <LinkIcon className="w-3 h-3" /> {websiteUrl}
+              </p>
+            )}
           </div>
 
           {/* Story Highlights Bar */}
           <div className="flex gap-4 overflow-x-auto pt-2 pb-1">
-            {[
-              { label: 'Drops ✨', emoji: '🛍️' },
-              { label: 'BTS 📸', emoji: '🎨' },
-              { label: 'Reviews ⭐', emoji: '💌' },
-              { label: 'About Us', emoji: '🌱' },
-            ].map((h, i) => (
-              <div key={i} className="flex flex-col items-center gap-1 shrink-0 cursor-pointer">
-                <div className="w-13 h-13 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-lg hover:scale-105 transition-transform">
+            {profileHighlights.map((h, i) => (
+              <div key={h.id || i} className="flex flex-col items-center gap-1 shrink-0 cursor-pointer">
+                <div className="w-13 h-13 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-lg hover:scale-105 transition-transform shadow-xs">
                   {h.emoji}
                 </div>
                 <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 truncate max-w-[56px]">
@@ -158,7 +198,7 @@ export default function FeedGridPlanner() {
               No posts in your grid yet
             </h3>
             <p className="text-xs text-slate-400 max-w-xs mx-auto leading-relaxed">
-              Compose scheduled posts or load starter templates to start visualizing your Instagram feed pattern.
+              Schedule your first content drop or upload graphics to begin visually curating your feed.
             </p>
             <button
               onClick={() => navigate('/composer')}
@@ -235,6 +275,86 @@ export default function FeedGridPlanner() {
         )}
       </div>
 
+      {/* Modal: Customize Profile Info */}
+      {showEditBioModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in"
+          onClick={() => setShowEditBioModal(false)}
+        >
+          <div
+            className="card max-w-md w-full p-6 shadow-2xl space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="font-extrabold text-slate-900 dark:text-white text-base">
+                Customize Profile Header
+              </h3>
+              <button
+                onClick={() => setShowEditBioModal(false)}
+                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveProfileHeader} className="space-y-4 pt-1">
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                  Profile Avatar Emoji
+                </label>
+                <input
+                  className="input text-xs"
+                  value={tempAvatar}
+                  onChange={(e) => setTempAvatar(e.target.value)}
+                  placeholder="✨ or 📸 or ☕"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                  Profile Bio Description
+                </label>
+                <textarea
+                  className="input text-xs resize-none"
+                  rows={4}
+                  value={tempBio}
+                  onChange={(e) => setTempBio(e.target.value)}
+                  placeholder="Tell your brand story and describe what you create..."
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                  Website / Linktree URL
+                </label>
+                <input
+                  className="input text-xs"
+                  value={tempWebsite}
+                  onChange={(e) => setTempWebsite(e.target.value)}
+                  placeholder="linktr.ee/yourbrand"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowEditBioModal(false)}
+                  className="btn-secondary flex-1 text-xs"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn-primary flex-1 text-xs"
+                >
+                  Save Profile
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Post Modal Inspection */}
       {selectedPost && (
         <div
@@ -245,8 +365,12 @@ export default function FeedGridPlanner() {
             className="card max-w-sm w-full p-6 shadow-2xl space-y-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className={`w-full h-44 rounded-2xl bg-gradient-to-br ${selectedPost.imageColor || 'from-purple-500 to-pink-500'} flex items-center justify-center text-5xl shadow-inner`}>
-              {selectedPost.imageEmoji || '📸'}
+            <div className={`w-full h-44 rounded-2xl bg-gradient-to-br ${selectedPost.imageColor || 'from-purple-500 to-pink-500'} flex items-center justify-center text-5xl shadow-inner overflow-hidden`}>
+              {selectedPost.imageUrl ? (
+                <img src={selectedPost.imageUrl} alt="post" className="w-full h-full object-cover" />
+              ) : (
+                <span>{selectedPost.imageEmoji || '📸'}</span>
+              )}
             </div>
             <div>
               <div className="flex items-center justify-between mb-1">

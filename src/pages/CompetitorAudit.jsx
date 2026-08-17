@@ -12,28 +12,31 @@ export default function CompetitorAudit() {
   const [handle, setHandle] = useState('');
   const [compName, setCompName] = useState('');
   const [category, setCategory] = useState('Lifestyle');
+  const [followers, setFollowers] = useState('15000');
 
   const handleAddCompetitor = (e) => {
     e.preventDefault();
     if (!handle.trim()) return;
 
     const cleanHandle = handle.trim().replace(/^@/, '');
+    const numFollowers = Number(followers) || 10000;
+
     const newComp = {
       id: `comp-${Date.now()}`,
       handle: cleanHandle,
       name: compName.trim() || cleanHandle,
       category,
-      followers: 15400,
-      followerGrowth: '+6.1%',
+      followers: numFollowers,
+      followerGrowth: '+5.4%',
       engagementRate: 4.2,
-      postsPerWeek: 4.0,
-      topFormat: 'Reels (58%)',
+      postsPerWeek: 3.5,
+      topFormat: 'Reels (60%)',
       avatar: '🎯',
       color: 'from-pink-500 to-rose-600',
       strengths: ['High Video Retention', 'Consistent Posting Cadence'],
       weaknesses: ['Low Story Interactivity'],
       recentPosts: [
-        { id: `rp-${Date.now()}`, title: 'Latest showcase post', likes: 780, comments: 45, format: 'Reel' }
+        { id: `rp-${Date.now()}`, title: 'Latest showcase drop', likes: 780, comments: 45, format: 'Reel' }
       ]
     };
 
@@ -42,6 +45,7 @@ export default function CompetitorAudit() {
     setShowAddModal(false);
     setHandle('');
     setCompName('');
+    setFollowers('15000');
   };
 
   return (
@@ -63,7 +67,7 @@ export default function CompetitorAudit() {
           className="btn-primary text-xs !py-2.5 !px-4 shadow-sm self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" />
-          <span>Track Competitor</span>
+          <span>+ Track Competitor</span>
         </button>
       </div>
 
@@ -75,11 +79,11 @@ export default function CompetitorAudit() {
               Industry Benchmark Index
             </h3>
             <p className="text-xs text-slate-400">
-              How @{accountName || 'your_brand'} stacks up against niche averages
+              How @{accountName || 'your_brand'} compares to niche benchmarks
             </p>
           </div>
-          <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
-            ⭐ Above Average Engagement
+          <span className="text-xs font-bold px-3 py-1 rounded-full bg-pink-50 text-pink-700 dark:bg-pink-950 dark:text-pink-300">
+            📊 Strategic Insights
           </span>
         </div>
 
@@ -108,89 +112,109 @@ export default function CompetitorAudit() {
       </div>
 
       {/* Tracked Competitor Profiles */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {competitors.map((comp) => (
-          <div key={comp.id} className="card p-6 shadow-sm flex flex-col justify-between space-y-4">
-            <div>
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${comp.color} flex items-center justify-center text-2xl shadow-sm text-white`}>
-                    {comp.avatar}
+      {competitors.length === 0 ? (
+        <div className="card p-12 text-center space-y-3">
+          <div className="w-14 h-14 rounded-2xl bg-pink-50 dark:bg-pink-950/60 text-pink-500 flex items-center justify-center mx-auto shadow-sm">
+            <Target className="w-7 h-7" />
+          </div>
+          <h3 className="font-bold text-base text-slate-800 dark:text-slate-200">
+            No competitors tracked yet
+          </h3>
+          <p className="text-xs text-slate-400 max-w-sm mx-auto leading-relaxed">
+            Add competitor accounts in your niche to benchmark follower growth, posting rhythm, and top content formats.
+          </p>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="btn-primary text-xs !py-2.5 mx-auto"
+          >
+            <Plus className="w-4 h-4" /> Add Your First Competitor
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {competitors.map((comp) => (
+            <div key={comp.id} className="card p-6 shadow-sm flex flex-col justify-between space-y-4">
+              <div>
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${comp.color} flex items-center justify-center text-2xl shadow-sm text-white`}>
+                      {comp.avatar}
+                    </div>
+                    <div>
+                      <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                        {comp.name}
+                      </h4>
+                      <p className="text-xs text-pink-600 dark:text-pink-400 font-semibold">
+                        @{comp.handle} · <span className="text-slate-400">{comp.category}</span>
+                      </p>
+                    </div>
                   </div>
+
+                  <button
+                    onClick={() => removeCompetitor(comp.id)}
+                    className="p-1.5 text-slate-400 hover:text-rose-500 transition-colors"
+                    title="Remove from tracking"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Metric Highlights */}
+                <div className="grid grid-cols-3 gap-2 mt-5 text-center">
+                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase">Followers</p>
+                    <p className="text-sm font-extrabold text-slate-900 dark:text-white mt-0.5">
+                      {comp.followers.toLocaleString()}
+                    </p>
+                    <span className="text-[10px] font-bold text-emerald-600">{comp.followerGrowth}</span>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase">Eng. Rate</p>
+                    <p className="text-sm font-extrabold text-slate-900 dark:text-white mt-0.5">
+                      {comp.engagementRate}%
+                    </p>
+                    <span className="text-[10px] font-semibold text-slate-400">Per Drop</span>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase">Cadence</p>
+                    <p className="text-sm font-extrabold text-slate-900 dark:text-white mt-0.5">
+                      {comp.postsPerWeek}/wk
+                    </p>
+                    <span className="text-[10px] font-semibold text-slate-400">Weekly</span>
+                  </div>
+                </div>
+
+                {/* Strengths & Content Format */}
+                <div className="mt-4 space-y-2 text-xs">
                   <div>
-                    <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">
-                      {comp.name}
-                    </h4>
-                    <p className="text-xs text-pink-600 dark:text-pink-400 font-semibold">
-                      @{comp.handle} · <span className="text-slate-400">{comp.category}</span>
+                    <span className="font-bold text-slate-500 uppercase text-[10px] tracking-wider block mb-1">
+                      Top Reach Driver:
+                    </span>
+                    <p className="font-semibold text-slate-800 dark:text-slate-200 bg-pink-50/50 dark:bg-pink-950/30 p-2 rounded-lg border border-pink-200/40 dark:border-pink-800/40">
+                      🏆 {comp.topFormat}
                     </p>
                   </div>
-                </div>
 
-                <button
-                  onClick={() => removeCompetitor(comp.id)}
-                  className="p-1.5 text-slate-400 hover:text-rose-500 transition-colors"
-                  title="Remove from tracking"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Metric Highlights */}
-              <div className="grid grid-cols-3 gap-2 mt-5 text-center">
-                <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase">Followers</p>
-                  <p className="text-sm font-extrabold text-slate-900 dark:text-white mt-0.5">
-                    {comp.followers.toLocaleString()}
-                  </p>
-                  <span className="text-[10px] font-bold text-emerald-600">{comp.followerGrowth}</span>
-                </div>
-
-                <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase">Eng. Rate</p>
-                  <p className="text-sm font-extrabold text-slate-900 dark:text-white mt-0.5">
-                    {comp.engagementRate}%
-                  </p>
-                  <span className="text-[10px] font-semibold text-slate-400">Per Drop</span>
-                </div>
-
-                <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase">Cadence</p>
-                  <p className="text-sm font-extrabold text-slate-900 dark:text-white mt-0.5">
-                    {comp.postsPerWeek}/wk
-                  </p>
-                  <span className="text-[10px] font-semibold text-slate-400">Weekly</span>
-                </div>
-              </div>
-
-              {/* Strengths & Content Format */}
-              <div className="mt-4 space-y-2 text-xs">
-                <div>
-                  <span className="font-bold text-slate-500 uppercase text-[10px] tracking-wider block mb-1">
-                    Top Reach Driver:
-                  </span>
-                  <p className="font-semibold text-slate-800 dark:text-slate-200 bg-pink-50/50 dark:bg-pink-950/30 p-2 rounded-lg border border-pink-200/40 dark:border-pink-800/40">
-                    🏆 {comp.topFormat}
-                  </p>
-                </div>
-
-                <div className="pt-2">
-                  <span className="font-bold text-slate-500 uppercase text-[10px] tracking-wider block mb-1">
-                    Strategic Advantages:
-                  </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {comp.strengths.map((s, idx) => (
-                      <span key={idx} className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md">
-                        ✓ {s}
-                      </span>
-                    ))}
+                  <div className="pt-2">
+                    <span className="font-bold text-slate-500 uppercase text-[10px] tracking-wider block mb-1">
+                      Strategic Advantages:
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {comp.strengths?.map((s, idx) => (
+                        <span key={idx} className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md">
+                          ✓ {s}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Strategic Insights & Growth Playbook */}
       <div className="card p-6 border-l-4 border-l-pink-500 shadow-sm space-y-3 bg-gradient-to-r from-pink-500/5 to-transparent">
@@ -207,7 +231,7 @@ export default function CompetitorAudit() {
           </li>
           <li className="flex items-start gap-2">
             <span className="text-pink-500 font-bold">•</span>
-            <span><strong>Exploit Low Competitor Reply Times:</strong> Competitors take 4+ hours to reply to inquiries. Use GramFlow's automated comment triggers to convert leads in under 5 minutes.</span>
+            <span><strong>Exploit Fast Response Velocity:</strong> Use GramFlow's automated comment triggers to convert leads and answer shipping inquiries in under 5 minutes.</span>
           </li>
         </ul>
       </div>
@@ -270,22 +294,37 @@ export default function CompetitorAudit() {
                 />
               </div>
 
-              <div>
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
-                  Niche Category
-                </label>
-                <select
-                  className="input text-xs"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                >
-                  <option value="Lifestyle">Lifestyle & Aesthetics</option>
-                  <option value="Fashion">Fashion & Apparel</option>
-                  <option value="E-Commerce">E-Commerce & Retail</option>
-                  <option value="Food & Cafe">Food, Beverage & Cafe</option>
-                  <option value="Fitness">Fitness & Wellness</option>
-                  <option value="Tech & B2B">Tech, SaaS & Services</option>
-                </select>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
+                    Category
+                  </label>
+                  <select
+                    className="input text-xs"
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                  >
+                    <option value="Lifestyle">Lifestyle</option>
+                    <option value="Fashion">Fashion</option>
+                    <option value="E-Commerce">E-Commerce</option>
+                    <option value="Food & Cafe">Cafe & Food</option>
+                    <option value="Fitness">Fitness</option>
+                    <option value="Tech & B2B">Tech & B2B</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
+                    Follower Count
+                  </label>
+                  <input
+                    type="number"
+                    className="input text-xs"
+                    placeholder="15000"
+                    value={followers}
+                    onChange={(e) => setFollowers(e.target.value)}
+                  />
+                </div>
               </div>
 
               <div className="flex gap-3 pt-2">

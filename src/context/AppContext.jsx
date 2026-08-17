@@ -4,13 +4,13 @@ import { defaultPosts, sampleStarterPosts } from '../data/mockPosts';
 import { defaultQuickRules, defaultIftttFlows, defaultCronJobs } from '../data/mockAutomations';
 import { defaultHashtagSets } from '../data/mockHashtags';
 import { generateNotifications } from '../data/mockNotifications';
-import { defaultConversations } from '../data/mockInbox';
+import { defaultConversations, defaultCannedResponses } from '../data/mockInbox';
 import { defaultCompetitors } from '../data/mockCompetitors';
 
 const AppContext = createContext(null);
 
 export function AppProvider({ children }) {
-  // ── Account ───────────────────────────────────────────────
+  // ── Account & Brand Customizations ────────────────────────
   const [accountName, setAccountNameState] = useState(() =>
     storage.get('gramflow:account', '')
   );
@@ -18,10 +18,64 @@ export function AppProvider({ children }) {
     !storage.get('gramflow:account', '')
   );
 
+  const [profileBio, setProfileBioState] = useState(() =>
+    storage.get('gramflow:bio', '✨ Welcome to our official Instagram page!\n🌿 Share your thoughts & explore our latest drops below.\n🛍️ Tap the link for updates!')
+  );
+
+  const [websiteUrl, setWebsiteUrlState] = useState(() =>
+    storage.get('gramflow:website', 'linktr.ee/mybrand')
+  );
+
+  const [profileAvatar, setProfileAvatarState] = useState(() =>
+    storage.get('gramflow:avatar', '✨')
+  );
+
+  const [followerBaseline, setFollowerBaselineState] = useState(() =>
+    storage.get('gramflow:followers', 1250)
+  );
+
+  const [profileHighlights, setProfileHighlightsState] = useState(() =>
+    storage.get('gramflow:highlights', [
+      { id: 'h1', label: 'Drops ✨', emoji: '🛍️' },
+      { id: 'h2', label: 'BTS 📸', emoji: '🎨' },
+      { id: 'h3', label: 'Reviews ⭐', emoji: '💌' },
+      { id: 'h4', label: 'About Us', emoji: '🌱' },
+    ])
+  );
+
   const setAccountName = useCallback((name) => {
     setAccountNameState(name);
     storage.set('gramflow:account', name);
     setShowAccountModal(false);
+  }, []);
+
+  const setProfileBio = useCallback((bio) => {
+    setProfileBioState(bio);
+    storage.set('gramflow:bio', bio);
+  }, []);
+
+  const setWebsiteUrl = useCallback((url) => {
+    setWebsiteUrlState(url);
+    storage.set('gramflow:website', url);
+  }, []);
+
+  const setProfileAvatar = useCallback((av) => {
+    setProfileAvatarState(av);
+    storage.set('gramflow:avatar', av);
+  }, []);
+
+  const setFollowerBaseline = useCallback((count) => {
+    const num = Number(count) || 0;
+    setFollowerBaselineState(num);
+    storage.set('gramflow:followers', num);
+  }, []);
+
+  const setProfileHighlights = useCallback((updater) => {
+    setProfileHighlightsState((prev) => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      storage.set('gramflow:highlights', next);
+      return next;
+    });
   }, []);
 
   // ── Theme ─────────────────────────────────────────────────
@@ -135,6 +189,14 @@ export function AppProvider({ children }) {
     });
   }, []);
 
+  const addConversation = useCallback((conv) => {
+    setConversations((prev) => [conv, ...prev]);
+  }, [setConversations]);
+
+  const deleteConversation = useCallback((id) => {
+    setConversations((prev) => prev.filter(c => c.id !== id));
+  }, [setConversations]);
+
   const replyToConversation = useCallback((convId, messageText) => {
     setConversations((prev) =>
       prev.map((c) => {
@@ -162,6 +224,19 @@ export function AppProvider({ children }) {
       prev.map((c) => (c.id === convId ? { ...c, unread: !c.unread } : c))
     );
   }, [setConversations]);
+
+  // Canned Responses
+  const [cannedResponses, setCannedResponsesState] = useState(() =>
+    storage.get('gramflow:canned', defaultCannedResponses)
+  );
+
+  const setCannedResponses = useCallback((updater) => {
+    setCannedResponsesState((prev) => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      storage.set('gramflow:canned', next);
+      return next;
+    });
+  }, []);
 
   // ── Competitors Intelligence ──────────────────────────────
   const [competitors, setCompetitorsState] = useState(() =>
@@ -233,20 +308,29 @@ export function AppProvider({ children }) {
   const resetAll = useCallback(() => {
     storage.clear();
     setPostsState([]);
-    setQuickRulesState(defaultQuickRules);
-    setIftttFlowsState(defaultIftttFlows);
-    setCronJobsState(defaultCronJobs);
-    setHashtagSetsState(defaultHashtagSets);
-    setConversationsState(defaultConversations);
-    setCompetitorsState(defaultCompetitors);
-    setNotifications(generateNotifications());
+    setQuickRulesState([]);
+    setIftttFlowsState([]);
+    setCronJobsState([]);
+    setHashtagSetsState([]);
+    setConversationsState([]);
+    setCompetitorsState([]);
+    setNotifications([]);
     setAccountNameState('');
+    setProfileBioState('✨ Welcome to our official Instagram page!\n🌿 Share your thoughts & explore our latest drops below.\n🛍️ Tap the link for updates!');
+    setWebsiteUrlState('linktr.ee/mybrand');
+    setProfileAvatarState('✨');
+    setFollowerBaselineState(0);
     setShowAccountModal(true);
   }, []);
 
   const value = {
-    // Account
+    // Brand & Profile Customization
     accountName, setAccountName,
+    profileBio, setProfileBio,
+    websiteUrl, setWebsiteUrl,
+    profileAvatar, setProfileAvatar,
+    followerBaseline, setFollowerBaseline,
+    profileHighlights, setProfileHighlights,
     showAccountModal, setShowAccountModal,
     // Theme
     darkMode, toggleDark,
@@ -259,7 +343,9 @@ export function AppProvider({ children }) {
     // Hashtags
     hashtagSets, setHashtagSets,
     // Inbox CRM
-    conversations, setConversations, replyToConversation, toggleConversationRead,
+    conversations, setConversations, addConversation, deleteConversation,
+    replyToConversation, toggleConversationRead,
+    cannedResponses, setCannedResponses,
     // Competitors
     competitors, addCompetitor, removeCompetitor,
     // Notifications
